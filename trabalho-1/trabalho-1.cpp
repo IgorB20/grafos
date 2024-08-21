@@ -1,6 +1,3 @@
-// grafos-aula-1.cpp : Este arquivo contém a função 'main'. A execução do programa começa e termina ali.
-//
-
 #include <iostream>
 #include <vector>
 #include <stack>
@@ -58,14 +55,14 @@ static void showAdjacencyMatrix(int** m, int vertexCount) {
 }
 
 static void showAdjacencyList(vector<Adjacency> adjacencies) {
-    cout << "Lista de adjacencia:" << endl;
+    cout << "Lista atual de adjacencia:" << endl;
     for (Adjacency adj : adjacencies) {
         cout << "{ " << adj.originVertex << ", " << adj.destinationVertex << " }" << endl;
     }
-    cout << endl;
+    //cout << endl;
 }
 
-static void dfs(int firstVertex, int vertexCount, int** m) {
+static void dfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1) {
     const int n = vertexCount;
     stack<int> stack;
     vector<int> visitados;
@@ -76,15 +73,22 @@ static void dfs(int firstVertex, int vertexCount, int** m) {
 
     int primeiroVertice = firstVertex;
     stack.push(primeiroVertice);
+    cout << endl;
     cout << "Ordem de visitacao de vertices utilizando Depth First Search" << endl;
 
     int verticeAtual;
 
     while (!stack.empty()) {
         verticeAtual = stack.top();
+        
         if ((visitados.at(verticeAtual) == 0)) {
             cout << verticeAtual + 1 << endl;
             visitados[verticeAtual] = 1; // marked as visited
+
+            if (vertexToFind != -1 && (verticeAtual + 1) == vertexToFind) {
+                cout << "Vertice " << vertexToFind << " encontrado." << endl;
+                break;
+            }
         }
 
         for (int i = 0; i < n; i++) {// find first adjacent edge
@@ -101,7 +105,7 @@ static void dfs(int firstVertex, int vertexCount, int** m) {
     cout << endl;
 }
 
-static void bfs(int firstVertex, int vertexCount, int** m) {
+static void bfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1) {
     int n = vertexCount;
     queue<int> queue;
     vector<int> visitados;
@@ -121,9 +125,15 @@ static void bfs(int firstVertex, int vertexCount, int** m) {
         if ((visitados.at(verticeAtual) == 0)) {
             cout << verticeAtual + 1 << endl;
             visitados[verticeAtual] = 1; // marked as visited
+
+            if (vertexToFind != -1 && (verticeAtual + 1) == vertexToFind) {
+                cout << "Vertice " << vertexToFind << " encontrado." << endl;
+                cout << endl;
+                break;
+            }
         }
 
-        for (int i = 0; i < n; i++) {// find first adjacent edge
+        for (int i = 0; i < n; i++) {
             if (m[verticeAtual][i] == 1 && (visitados.at(i) == 0)) {
                 queue.push(i);
             }
@@ -146,40 +156,52 @@ static bool vertexExists(vector<Adjacency> adjacencies, int vertexToInsert) {
 
 int main()
 {
-
-    int presentationBalancer = 0;
-
     //MENU #1 - inserção inicial do grafo
     int vertexCount;
     cout << "Informe a quantidade de vertices" << endl;
     cin >> vertexCount;
     vector<Adjacency> adjacencies;
     char option;
+    int currentVertex;
     for (int i = 0; i < vertexCount; i++) {
         bool stop = false;
+        currentVertex = i + 1;
 
         while (!stop) {
-            cout << "Escolha uma opcao:" << endl;
-            cout << "a - Adicionar adjacencia ao vertice " << i + 1 << ": " << endl;
+            cout << endl;
+            cout << "Vertice atual: " << currentVertex << endl;
+            cout << "Escolha uma opcao: " << endl;
+            cout << "a - Adicionar adjacencia ao vertice " << currentVertex << ": " << endl;
 
-            if (i < vertexCount - 1) cout << "b - Ir para o proximo vertice (" << i + 2 << ") : " << endl;
+            if (i < vertexCount - 1) cout << "b - Ir para o proximo vertice (" << currentVertex + 1 << ") : " << endl;
             if (i == vertexCount - 1) cout << "b - finalizar" << endl;
 
             cin >> option;
 
             if (option == 'a') {
                 int input;
-                cout << "Informe a adjacencia ao vertice " << i + 1 << ":" << endl;
+                cout << endl;
+                cout << "Informe uma adjacencia para o vertice " << currentVertex << ":" << endl;
                 cin >> input;
 
-                addAdjacency(adjacencies, i + 1, input);
+                addAdjacency(adjacencies, currentVertex, input);
 
-                cout << "adjacencia adicionada com sucesso!" << endl;
+                cout << endl;
+                cout << "Adjacencia adicionada com sucesso!" << endl;
+                showAdjacencyList(adjacencies);
             }
 
             if (option == 'b') {
                 stop = true;
+
+                if (i == vertexCount - 1) {
+                    cout << endl;
+                    cout << "Grafo inserido com sucesso!" << endl;
+                    cout << endl;
+                }
             }
+
+            
         }
     }
     // MENU #1 END
@@ -188,15 +210,17 @@ int main()
     setAdjacencyMatrix(m, vertexCount, adjacencies);
 
     showAdjacencyList(adjacencies);
+    cout << endl;
     showAdjacencyMatrix(m, vertexCount);
 
     // MAIN LOOP 
     bool stop = false;
 
     while (!stop) {
-        cout << "Selecione uma das opcoes: " << endl;
+        //cout << endl;
+        cout << "Selecione uma opcao: " << endl;
         cout << "a - DFS - Depth First Search" << endl;
-        cout << "b - BFF - Amplitude" << endl;
+        cout << "b - BFS - Amplitude" << endl;
         cout << "c - Incluir vertice" << endl;
         cout << "d - Excluir vertice" << endl;
         cout << "e - Adicionar aresta/arco" << endl;
@@ -210,10 +234,23 @@ int main()
         int initialVertex;
 
         if (option == 'a') { // DFS - Depth First Search
+            cout << endl;
+            cout << "DFS - Escolha uma opção: " << endl;
             cout << "a - buscar por vertice especifico" << endl;
             cout << "b - percorrer todo o grafo" << endl;
             cout << "c - Voltar" << endl;
             cin >> subOption;
+
+            if(subOption == 'a') {
+                int vertexToFind;
+                cout << "Informe o vertice que voce deseja achar:" << endl;
+                cin >> vertexToFind;
+
+                cout << "Informe o vertice inicial da busca: " << endl;
+                cin >> initialVertex;
+
+                dfs(initialVertex - 1, vertexCount, m, vertexToFind);
+            }
 
             if (subOption == 'b') {
                 cout << "Informe o vertice inicial da busca: " << endl;
@@ -223,10 +260,23 @@ int main()
 
         }
         if (option == 'b') { //BFS - Amplitude
+            cout << endl;
+            cout << "BFS - Escolha uma opcao: " << endl;
             cout << "a - buscar por vertice especifico" << endl;
             cout << "b - percorrer todo o grafo" << endl;
             cout << "c - Voltar" << endl;
             cin >> subOption;
+
+            if (subOption == 'a') {
+                int vertexToFind;
+                cout << "Informe o vertice que voce deseja achar:" << endl;
+                cin >> vertexToFind;
+
+                cout << "Informe o vertice inicial da busca: " << endl;
+                cin >> initialVertex;
+
+                bfs(initialVertex - 1, vertexCount, m, vertexToFind);
+            }
 
             if (subOption == 'b') {
                 cout << "Informe o vertice inicial da busca: " << endl;
@@ -327,7 +377,7 @@ int main()
 
 
         }
-        if (option == 'e') {
+        if (option == 'e') { // adicionar aresta/arco
             int originVertex, destinationVertex;
             cout << "Informe o vertice de origem: " << endl;
             cin >> originVertex;
@@ -337,7 +387,7 @@ int main()
             addAdjacency(adjacencies, originVertex, destinationVertex);
             setAdjacencyMatrix(m, vertexCount, adjacencies);
         }
-        if (option == 'f') {
+        if (option == 'f') { // excluir aresta/arco
             int originVertex, destinationVertex;
             cout << "Informe o vertice de origem: " << endl;
             cin >> originVertex;
@@ -363,172 +413,19 @@ int main()
             setAdjacencyMatrix(m, vertexCount, adjacencies);
 
         }
-        if (option == 'g') {
+        if (option == 'g') { // mostrar matriz e lista de adjacencia
             showAdjacencyMatrix(m, vertexCount);
             showAdjacencyList(adjacencies);
         }
-        if (option == 'h') stop = true;
+        if (option == 'h') stop = true; // sair
 
     }
 
     // MAIN LOOP END
 
-
-    const int n = 6; //quantidade de vertices
-    const int linhas = 11;
-    const int colunas = 2; // a quantidade de colunas é sempre 2
-
-
-    // a, b, c, d, e, f, g, h, i
-    // 1, 2, 3, 4, 5, 6, 7, 8, 9
-
-
-    ;
-    //primeiro exemplo
-   /*
- int listaAdjacencia[linhas][colunas] = {
-       {1,2},
-       {1,4},
-       {1,6},
-       {1,9},
-       {2,1},
-       {2,3},
-       {2,4},
-       {2,5},
-       {3,2},
-       {3,4},
-       {3,5},
-       {3,6},
-       {4,1},
-       {4,2},
-       {4,3},
-       {5,2},
-       {5,3},
-       {5,6},
-       {6,1},
-       {6,3},
-       {6,5},
-    };    */
-
-
-    // segundo exemplo
-    int listaAdjacencia[linhas][colunas] = {
-      {1,2},
-      {1,6},
-      {2,3},
-      {2,4},
-      {3,5},
-      {3,6},
-      {4,1},
-      {4,3},
-      {5,2},
-      {5,6},
-      {6,5},
-    };
-
-
-    int matriz[n][n] = {};
-
-    for (int i = 0; i < linhas; i++) {
-
-        int verticeOrigem = listaAdjacencia[i][0] - 1;
-        int verticeDestino = listaAdjacencia[i][1] - 1;
-
-        matriz[verticeOrigem][verticeDestino] = 1;
-
-    }
-
-
-    cout << "Matriz de adjacencia:" << endl;
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            cout << matriz[i][j] << " ";
-        }
-        cout << endl;
-    }
-
-    cout << endl;
-
-
-
-    //DFS - Depth First Search
-    stack<int> stack;
-    vector<int> visitados;
-
-    for (int i = 0; i < n; i++) {
-        visitados.push_back(0);
-    }
-
-    int primeiroVertice = 0;
-    stack.push(primeiroVertice);
-    cout << "Ordem de visitacao de vertices utilizando Depth First Search" << endl;
-
-    int verticeAtual;
-
-    while (!stack.empty()) {
-        verticeAtual = stack.top();
-        if ((visitados.at(verticeAtual) == 0)) {
-            cout << verticeAtual + 1 << endl;
-            visitados[verticeAtual] = 1; // marked as visited
-        }
-
-        for (int i = 0; i < n; i++) {// find first adjacent edge
-            if (matriz[verticeAtual][i] == 1 && (visitados.at(i) == 0)) {
-                stack.push(i);
-                break;
-            }
-            else if (i == n - 1) {
-                stack.pop();
-            }
-        }
-    }
-
-
-    //BFS - Amplitude
-    queue<int> queue;
-    vector<int> visitados2;
-
-    for (int i = 0; i < n; i++) {
-        visitados2.push_back(0);
-    }
-
-    queue.push(primeiroVertice);
-    int verticeAtual2;
-
-    cout << "Ordem de visitacao de vertices utilizando BFS - Amplitude" << endl;
-
-    while (!queue.empty()) {
-        verticeAtual2 = queue.front();
-        queue.pop();
-        if ((visitados2.at(verticeAtual2) == 0)) {
-            cout << verticeAtual2 + 1 << endl;
-            visitados2[verticeAtual2] = 1; // marked as visited
-        }
-
-        for (int i = 0; i < n; i++) {// find first adjacent edge
-            if (matriz[verticeAtual2][i] == 1 && (visitados2.at(i) == 0)) {
-                queue.push(i);
-            }
-        }
-    }
-
-
     cleanAdjacencyMatrix(m, vertexCount);
-
 }
 
 
 
 
-
-
-// Executar programa: Ctrl + F5 ou Menu Depurar > Iniciar Sem Depuração
-// Depurar programa: F5 ou menu Depurar > Iniciar Depuração
-
-// Dicas para Começar: 
-//   1. Use a janela do Gerenciador de Soluções para adicionar/gerenciar arquivos
-//   2. Use a janela do Team Explorer para conectar-se ao controle do código-fonte
-//   3. Use a janela de Saída para ver mensagens de saída do build e outras mensagens
-//   4. Use a janela Lista de Erros para exibir erros
-//   5. Ir Para o Projeto > Adicionar Novo Item para criar novos arquivos de código, ou Projeto > Adicionar Item Existente para adicionar arquivos de código existentes ao projeto
-//   6. No futuro, para abrir este projeto novamente, vá para Arquivo > Abrir > Projeto e selecione o arquivo. sln
