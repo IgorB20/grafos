@@ -100,6 +100,16 @@ static void dfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
                 stack.pop();
             }
         }
+
+        if (stack.empty()) {
+            for (int i = 0; i < visitados.size(); i++) {
+                if (visitados.at(i) == 0) {
+                    stack.push(i);
+                    break;
+                }
+
+            }
+        }
     }
 
     cout << endl;
@@ -136,6 +146,16 @@ static void bfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
         for (int i = 0; i < n; i++) {
             if (m[verticeAtual][i] == 1 && (visitados.at(i) == 0)) {
                 queue.push(i);
+            }
+        }
+
+        if (queue.empty()) {
+            for (int i = 0; i < visitados.size(); i++) {
+                if (visitados.at(i) == 0) {
+                    queue.push(i);
+                    break;
+                }
+          
             }
         }
     }
