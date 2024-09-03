@@ -5,10 +5,6 @@
 
 using namespace std;
 
-//int deletedVertex = -1;
-
-vector<int> deletedVertexes;
-
 struct Adjacency {
     int originVertex;
     int destinationVertex;
@@ -34,13 +30,6 @@ static void setAdjacencyMatrix(int** m, int vertexCount, vector<Adjacency> adjac
 
         int originVertex = adj.originVertex - 1;
         int destinationVertex = adj.destinationVertex - 1;
-
-
-        for (int deletedVert : deletedVertexes) {
-            if (originVertex >= (deletedVert - 1)) originVertex--;
-            if (destinationVertex >= (deletedVert - 1)) destinationVertex--;
-        }
-      
 
         m[originVertex][destinationVertex] = 1;
     }
@@ -77,6 +66,7 @@ static void dfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
     const int n = vertexCount;
     stack<int> stack;
     vector<int> visitados;
+    int disconnectedCount = 0;
 
     for (int i = 0; i < n; i++) {
         visitados.push_back(0);
@@ -92,13 +82,8 @@ static void dfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
     while (!stack.empty()) {
         verticeAtual = stack.top();
 
-        int vertexIndexBalancer = 1;
-        for (int deletedVert : deletedVertexes) {
-            if ((verticeAtual + vertexIndexBalancer) >= deletedVert) vertexIndexBalancer++;
-        }
-
         if ((visitados.at(verticeAtual) == 0)) {
-            cout << verticeAtual + vertexIndexBalancer << endl;
+            cout << verticeAtual + 1 << endl;
             visitados[verticeAtual] = 1; // marked as visited
 
             if (vertexToFind != -1 && (verticeAtual + 1) == vertexToFind) {
@@ -121,6 +106,7 @@ static void dfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
             for (int i = 0; i < visitados.size(); i++) {
                 if (visitados.at(i) == 0) {
                     stack.push(i);
+                    disconnectedCount++;
                     break;
                 }
 
@@ -128,28 +114,26 @@ static void dfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
         }
     }
 
+    // Verifica se o grafo   conexo ou n o
+    if (disconnectedCount >= 1) {
+        cout << endl;
+        cout << "O grafo nao e conexo" << endl;
+        cout << endl;
+    }
+    else {
+        cout << endl;
+        cout << "O grafo e conexo." << endl;
+        cout << endl;
+    }
+
     cout << endl;
 }
 
 static void bfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1) {
-    bool vertexAlreadyDeleted = false;
-    for (int v : deletedVertexes) {
-        if ((firstVertex + 1) == v) {
-            vertexAlreadyDeleted = true;
-            break;
-        }
-    }
-
-    if (vertexAlreadyDeleted)    {
-        cout << endl;
-        cout << "Vertice ja foi removido!" << endl;
-        cout << endl;
-        return;
-    }
-
     int n = vertexCount;
     queue<int> queue;
     vector<int> visitados;
+    int disconnectedCount = 0;
 
     for (int i = 0; i < n; i++) {
         visitados.push_back(0);
@@ -163,14 +147,8 @@ static void bfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
     while (!queue.empty()) {
         verticeAtual = queue.front();
         queue.pop();
-      
-        int vertexIndexBalancer = 1;
-        for (int deletedVert : deletedVertexes) {
-            if ((verticeAtual + vertexIndexBalancer) >= deletedVert) vertexIndexBalancer++;
-        }
-
         if ((visitados.at(verticeAtual) == 0)) {
-            cout << verticeAtual + vertexIndexBalancer << endl;
+            cout << verticeAtual + 1 << endl;
             visitados[verticeAtual] = 1; // marked as visited
 
             if (vertexToFind != -1 && (verticeAtual + 1) == vertexToFind) {
@@ -189,13 +167,22 @@ static void bfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
         if (queue.empty()) {
             for (int i = 0; i < visitados.size(); i++) {
                 if (visitados.at(i) == 0) {
+                    disconnectedCount++;
                     queue.push(i);
                     break;
                 }
-          
+
             }
         }
     }
+    // Verifica se o grafo   conexo ou n o
+    if (disconnectedCount >= 1) {
+        cout << "O grafo nao e conexo" << endl;
+    }
+    else {
+        cout << "O grafo e conexo." << endl;
+    }
+
 }
 
 
@@ -213,35 +200,12 @@ static bool vertexExists(vector<Adjacency> adjacencies, int vertexToInsert) {
 
 int main()
 {
-    //MENU #1 - inserção inicial do grafo
-    //int vertexCount;
-    //cout << "Informe a quantidade de vertices" << endl;
-    //cin >> vertexCount;
-
-    int vertexCount = 8;
-    vector<Adjacency> adjacencies = {
-      { 1, 4 },
-      { 2, 4 },
-      { 2, 8 },
-      { 3, 5 },
-      { 3, 6 },
-      { 4, 1 },
-      { 4, 2 },
-      { 4, 8 },
-      { 5, 3 },
-      { 5, 6 },
-      { 5, 7 },
-      { 6, 3 },
-      { 6, 5 },
-      { 7, 5 },
-      { 8, 2 },
-      { 8, 4 }
-       
-    };
+    //MENU #1 - inser  o inicial do grafo
+    int vertexCount;
+    cout << "Informe a quantidade de vertices" << endl;
+    cin >> vertexCount;
+    vector<Adjacency> adjacencies;
     char option;
-
-    /*
-    *    
     int currentVertex;
     for (int i = 0; i < vertexCount; i++) {
         bool stop = false;
@@ -281,11 +245,9 @@ int main()
                 }
             }
 
-            
+
         }
     }
-    */
-    
     // MENU #1 END
 
     int** m = new int* [vertexCount];
@@ -295,10 +257,7 @@ int main()
     cout << endl;
     showAdjacencyMatrix(m, vertexCount);
 
-    //vector<int> deletedVertexes;
-
-
-    // MAIN LOOP 
+    // MAIN LOOP
     bool stop = false;
 
     while (!stop) {
@@ -320,13 +279,13 @@ int main()
 
         if (option == 'a') { // DFS - Depth First Search
             cout << endl;
-            cout << "DFS - Escolha uma opção: " << endl;
+            cout << "DFS - Escolha uma op  o: " << endl;
             cout << "a - buscar por vertice especifico" << endl;
             cout << "b - percorrer todo o grafo" << endl;
             cout << "c - Voltar" << endl;
             cin >> subOption;
 
-            if(subOption == 'a') {
+            if (subOption == 'a') {
                 int vertexToFind;
                 cout << "Informe o vertice que voce deseja achar:" << endl;
                 cin >> vertexToFind;
@@ -403,32 +362,12 @@ int main()
             cout << "Informe o vertice que deseja excluir ou pressione 0 para voltar: " << endl;
             cin >> input;
 
-            int deletedVertexBalancer = 0;
-            // if (deletedVertexes.size() > 0 && input > deletedVertex) deletedVertexBalancer++;
 
-
-
-            for (int d : deletedVertexes) {
-                if(input >= d) deletedVertexBalancer++;
-            }
-
-
-            bool vertexAlreadyDeleted = false;
-            for (int v : deletedVertexes) {
-                if (input == v) {
-                    vertexAlreadyDeleted = true;
-                    break;
-                }
-            }
-
-            if ((input - deletedVertexBalancer) > vertexCount || input < 0 || vertexAlreadyDeleted) {
-                cout << endl;
+            if (input > vertexCount || input < 0) {
                 cout << "Vertice invalido!" << endl;
-                cout << endl;
             }
             else if (input != 0) {
-                //deletedVertex = input;
-                deletedVertexes.push_back(input);
+
                 bool stop = false;
                 int positionToDelete;
                 int index = 0;
@@ -468,8 +407,6 @@ int main()
                         if (!found) {
                             vertexCount--;
                         }
-
-                    
 
                         //cleanAdjacencyMatrix(m, vertexCount);
                         setAdjacencyMatrix(m, vertexCount, adjacencies);
@@ -532,7 +469,3 @@ int main()
 
     cleanAdjacencyMatrix(m, vertexCount);
 }
-
-
-
-
