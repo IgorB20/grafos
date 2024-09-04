@@ -5,6 +5,8 @@
 
 using namespace std;
 
+vector<int> deletedVertexes;
+
 struct Adjacency {
     int originVertex;
     int destinationVertex;
@@ -31,6 +33,11 @@ static void setAdjacencyMatrix(int** m, int vertexCount, vector<Adjacency> adjac
         int originVertex = adj.originVertex - 1;
         int destinationVertex = adj.destinationVertex - 1;
 
+        for (int deletedVert : deletedVertexes) {
+            if (originVertex >= (deletedVert - 1)) originVertex--;
+            if (destinationVertex >= (deletedVert - 1)) destinationVertex--;
+        }
+
         m[originVertex][destinationVertex] = 1;
     }
 }
@@ -55,7 +62,7 @@ static void showAdjacencyMatrix(int** m, int vertexCount) {
 }
 
 static void showAdjacencyList(vector<Adjacency> adjacencies) {
-    cout << "Lista atual de adjacencia:" << endl;
+    //cout << "Lista atual de adjacencia:" << endl;
     for (Adjacency adj : adjacencies) {
         cout << "{ " << adj.originVertex << ", " << adj.destinationVertex << " }" << endl;
     }
@@ -129,7 +136,12 @@ static void dfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
     cout << endl;
 }
 
-static void bfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1) {
+
+/*
+    retorna true se o grafo for conexo e false se nao for
+*/
+static bool bfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1) {
+    bool isConnected = false;
     int n = vertexCount;
     queue<int> queue;
     vector<int> visitados;
@@ -147,8 +159,14 @@ static void bfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
     while (!queue.empty()) {
         verticeAtual = queue.front();
         queue.pop();
+        
+        int vertexIndexBalancer = 1;
+        for (int deletedVert : deletedVertexes) {
+            if ((verticeAtual + vertexIndexBalancer) >= deletedVert) vertexIndexBalancer++;
+        }
+
         if ((visitados.at(verticeAtual) == 0)) {
-            cout << verticeAtual + 1 << endl;
+            cout << verticeAtual + vertexIndexBalancer << endl;
             visitados[verticeAtual] = 1; // marked as visited
 
             if (vertexToFind != -1 && (verticeAtual + 1) == vertexToFind) {
@@ -175,13 +193,10 @@ static void bfs(int firstVertex, int vertexCount, int** m, int vertexToFind = -1
             }
         }
     }
-    // Verifica se o grafo   conexo ou n o
-    if (disconnectedCount >= 1) {
-        cout << "O grafo nao e conexo" << endl;
-    }
-    else {
-        cout << "O grafo e conexo." << endl;
-    }
+    
+    if (disconnectedCount == 0) isConnected = true;
+
+    return isConnected;
 
 }
 
@@ -198,9 +213,153 @@ static bool vertexExists(vector<Adjacency> adjacencies, int vertexToInsert) {
     return exists;
 }
 
+static void verifyConexity(int** m, int vertexCount){
+   
+    bool isConnected = bfs(0, vertexCount, m);
+
+    if (isConnected) {
+        cout << endl;
+        cout << "O grafo e conexo" << endl;
+        cout << endl;
+    }
+    else {
+        cout << endl;
+        cout << "O grafo nao e conexo" << endl;
+        //cout << endl;
+
+        //mostrar todos os subgrafos fortemente conexos
+        vector<vector<Adjacency>> subgraphs;
+
+        vector<Adjacency> currentSubgraph;
+
+        int currentSubGraphIndex = 0;
+        vector<int> visitados;
+        queue<int> queue;
+
+        for (int i = 0; i < vertexCount; i++) {
+            visitados.push_back(0);
+        }
+
+
+        queue.push(0);
+        int verticeAtual;
+        while (!queue.empty()) {
+            verticeAtual = queue.front();
+            queue.pop();
+            
+            
+            if ((visitados.at(verticeAtual) == 0)) {
+                visitados[verticeAtual] = 1; // marked as visited
+
+                for (int i = 0; i < vertexCount; i++) {
+                    if (m[verticeAtual][i] == 1 && (visitados.at(i) == 0)) {
+                        queue.push(i);
+                    }
+                }
+
+                for (int i = 0; i < vertexCount; i++) {
+                    if (m[verticeAtual][i] == 1) {
+                        int balancer = 0;
+
+                        int currentVertexToAdd = verticeAtual + 1;
+                        int currentVertexAdjacency = i + 1;
+
+                        for (int deletedVertex : deletedVertexes) {
+                            if (currentVertexToAdd >= deletedVertex) currentVertexToAdd++;
+                            if (currentVertexAdjacency >= deletedVertex) currentVertexAdjacency++;
+                        }
+
+                        addAdjacency(currentSubgraph, currentVertexToAdd, currentVertexAdjacency);
+                    }
+                }
+            }
+            
+
+         
+
+            if (queue.empty()) { // aqui se inicia um novo subgrafo
+                subgraphs.push_back(currentSubgraph);
+                currentSubgraph.clear();
+                for (int i = 0; i < visitados.size(); i++) {
+                    if (visitados.at(i) == 0) {
+                        queue.push(i);
+                        break;
+                    }
+
+                }
+            }
+        }
+
+
+        cout << endl;
+        cout << "Subgrafos fortemente conexos:" << endl;
+        cout << endl;
+        
+        int subgraphId = 1;
+        for (vector<Adjacency> subGraphAdjacencyList : subgraphs) {
+            cout << "Subgrafo fortemente conexo #" << subgraphId << endl;
+
+            showAdjacencyList(subGraphAdjacencyList);
+
+            cout << endl;
+
+            subgraphId++;
+
+        }
+
+        //if (disconnectedCount == 0) isConnected = true;
+
+    }
+
+}
+
+
+static void showAloneVertexes(int** m, int vertexCount) {
+    vector<int> aloneVertexes;
+
+    bool foundAdjacency = false;
+
+    for (int i = 0; i < vertexCount; i++) {
+        for (int j = 0; j < vertexCount; j++) {
+            if (m[i][j] == 1) foundAdjacency = true;
+        }
+
+        if (!foundAdjacency) aloneVertexes.push_back(i + 1);
+    }
+
+    cout << "Vertices sem adjacencias: " << endl;
+    for (int v : aloneVertexes) {
+        cout << v << endl;
+    }
+}
+
 int main()
 {
-    //MENU #1 - inser  o inicial do grafo
+
+    int vertexCount = 8;
+    vector<Adjacency> adjacencies = {
+      { 1, 4 },
+      { 2, 4 },
+      { 2, 8 },
+      { 3, 5 },
+      { 3, 6 },
+      { 4, 1 },
+      { 4, 2 },
+      { 4, 8 },
+      { 5, 3 },
+      { 5, 6 },
+      { 5, 7 },
+      { 6, 3 },
+      { 6, 5 },
+      { 7, 5 },
+      { 8, 2 },
+      { 8, 4 }
+
+    };
+    char option;
+
+    /*
+     //MENU #1 - inser  o inicial do grafo
     int vertexCount;
     cout << "Informe a quantidade de vertices" << endl;
     cin >> vertexCount;
@@ -248,10 +407,14 @@ int main()
 
         }
     }
+    */
+   
     // MENU #1 END
 
     int** m = new int* [vertexCount];
     setAdjacencyMatrix(m, vertexCount, adjacencies);
+
+    cout << "Lista atual de adjacencia:" << endl;
 
     showAdjacencyList(adjacencies);
     cout << endl;
@@ -270,7 +433,8 @@ int main()
         cout << "e - Adicionar aresta/arco" << endl;
         cout << "f - Excluir aresta/arco" << endl;
         cout << "g - Mostrar matriz e lista de adjacencia" << endl;
-        cout << "h - Sair" << endl;
+        cout << "h - Verificar conexidade do grafo" << endl;
+        cout << "i - Sair" << endl;
 
         cin >> option;
 
@@ -367,7 +531,7 @@ int main()
                 cout << "Vertice invalido!" << endl;
             }
             else if (input != 0) {
-
+                deletedVertexes.push_back(input);
                 bool stop = false;
                 int positionToDelete;
                 int index = 0;
@@ -459,9 +623,14 @@ int main()
         }
         if (option == 'g') { // mostrar matriz e lista de adjacencia
             showAdjacencyMatrix(m, vertexCount);
+
+            cout << "Lista atual de adjacencia:" << endl;
             showAdjacencyList(adjacencies);
         }
-        if (option == 'h') stop = true; // sair
+        if (option == 'h') { // verificar conexidade
+            verifyConexity(m, vertexCount);
+        }
+        if (option == 'i') stop = true; // sair
 
     }
 
